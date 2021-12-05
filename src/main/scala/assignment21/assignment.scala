@@ -9,7 +9,7 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.types.{ArrayType, StringType, StructField, IntegerType}
+import org.apache.spark.sql.types.{ArrayType, StringType, StructField, IntegerType, DoubleType}
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.{count, sum, min, max, asc, desc, udf, to_date, avg}
@@ -43,17 +43,35 @@ import scala.collection.immutable.Range
 object assignment  {
   // Suppress the log messages:
   Logger.getLogger("org").setLevel(Level.OFF)
-                       
-  
-  val spark = ???
-                          
+
+
+  val spark = SparkSession.builder()
+                          .appName("assignment")
+                          .config("spark.driver.host", "localhost")
+                          .master("local")
+                          .getOrCreate()
+
+  val schema1 = new StructType()
+    .add(StructField("a", DoubleType, true))
+    .add(StructField("b", DoubleType, true))
+    .add(StructField("LABEL", StringType, true))
+
+  val schema2 = new StructType()
+    .add(StructField("a", DoubleType, true))
+    .add(StructField("b", DoubleType, true))
+    .add(StructField("c", DoubleType, true))
+    .add(StructField("LABEL", StringType, true))
+
   val dataK5D2 =  spark.read
-                       .???
+                       .option("header", "true")
+                       .schema(schema1)
                        .csv("data/dataK5D2.csv")
 
   val dataK5D3 =  spark.read
-                       .???
+                       .option("header", "true")
+                       .schema(schema2)
                        .csv("data/dataK5D3.csv")
+
 
   def task1(df: DataFrame, k: Int): Array[(Double, Double)] = {
     ???
@@ -71,9 +89,9 @@ object assignment  {
   def task4(df: DataFrame, low: Int, high: Int): Array[(Int, Double)]  = {
     ???
   }
-     
-  
-    
+
+
+
 }
 
 
