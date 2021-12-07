@@ -102,7 +102,7 @@ object assignment  {
     
     kmModel.summary.predictions.show
     
-    kmModel.clusterCenters.map(vectorElement => new Pair(vectorElement(0), vectorElement(1)))
+    return kmModel.clusterCenters.map(vectorElement => (vectorElement(0), vectorElement(1)))
     
   }
 
@@ -135,7 +135,7 @@ object assignment  {
     
     kmModel.summary.predictions.show
     
-    ???
+    return kmModel.clusterCenters.map(vectorElement => (vectorElement(0), vectorElement(1), vectorElement(2)))
   }
 
   def task3(df: DataFrame, k: Int): Array[(Double, Double)] = {
