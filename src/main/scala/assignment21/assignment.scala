@@ -24,7 +24,7 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 
 
-import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.feature.{VectorAssembler, MinMaxScaler}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.clustering.{KMeans, KMeansSummary}
 
@@ -74,10 +74,67 @@ object assignment  {
 
 
   def task1(df: DataFrame, k: Int): Array[(Double, Double)] = {
-    ???
+    val vectorAssembler = new VectorAssembler()
+      .setInputCols(Array("a", "b"))
+      .setOutputCol("unscaledFeatures")
+    
+    val transformationPipeline = new Pipeline()
+      .setStages(Array(vectorAssembler))
+    
+    //Fit produces a transformer
+    val pipeLine = transformationPipeline.fit(df)
+    val transformedData = pipeLine.transform(df)
+    transformedData.show
+    
+    val scaler = new MinMaxScaler()
+      .setInputCol("unscaledFeatures")
+      .setOutputCol("features")
+    
+    val scalerModel = scaler.fit(transformedData)
+    
+    val scaledData = scalerModel.transform(transformedData)
+    
+    val kmeans = new KMeans()
+      .setK(k)
+      .setSeed(1L)
+    
+    val kmModel = kmeans.fit(scaledData)
+    
+    kmModel.summary.predictions.show
+    
+    kmModel.clusterCenters.map(vectorElement => new Pair(vectorElement(0), vectorElement(1)))
+    
   }
 
   def task2(df: DataFrame, k: Int): Array[(Double, Double, Double)] = {
+    val vectorAssembler = new VectorAssembler()
+      .setInputCols(Array("a", "b", "c"))
+      .setOutputCol("unscaledFeatures")
+    
+    val transformationPipeline = new Pipeline()
+      .setStages(Array(vectorAssembler))
+    
+    //Fit produces a transformer
+    val pipeLine = transformationPipeline.fit(df)
+    val transformedData = pipeLine.transform(df)
+    transformedData.show
+    
+    val scaler = new MinMaxScaler()
+      .setInputCol("unscaledFeatures")
+      .setOutputCol("features")
+    
+    val scalerModel = scaler.fit(transformedData)
+    
+    val scaledData = scalerModel.transform(transformedData)
+    
+    val kmeans = new KMeans()
+      .setK(k)
+      .setSeed(1L)
+    
+    val kmModel = kmeans.fit(scaledData)
+    
+    kmModel.summary.predictions.show
+    
     ???
   }
 
