@@ -55,6 +55,7 @@ object assignment  {
                           .master("local")
                           .getOrCreate()
 
+  // Define schemas for the dataframes and read the data
   val schema1 = new StructType()
     .add(StructField("a", DoubleType, true))
     .add(StructField("b", DoubleType, true))
@@ -75,7 +76,8 @@ object assignment  {
                        .option("header", "true")
                        .schema(schema2)
                        .csv("data/dataK5D3.csv")
-                       
+
+  // Create dataframe with labels mapped to numerical values, Ok to 0 and Fatal to 1
   val dataK5D3WithLabels = dataK5D2.withColumn("num(LABEL)", when(dataK5D2("LABEL") === " Ok", 0)
                                     .otherwise(1))
                                     
@@ -87,30 +89,28 @@ object assignment  {
       .setInputCols(Array("a", "b"))
       .setOutputCol("unscaledFeatures")
     
+    val scaler = new MinMaxScaler()
+      .setInputCol("unscaledFeatures")
+      .setOutputCol("features")
+    
+    // Make a transformation pipeline to first use vectorAssembler and then scale the data
     val transformationPipeline = new Pipeline()
-      .setStages(Array(vectorAssembler))
+      .setStages(Array(vectorAssembler, scaler))
     
     //Fit produces a transformer
     val pipeLine = transformationPipeline.fit(df)
     val transformedData = pipeLine.transform(df)
     transformedData.show
     
-    val scaler = new MinMaxScaler()
-      .setInputCol("unscaledFeatures")
-      .setOutputCol("features")
-    
-    val scalerModel = scaler.fit(transformedData)
-    
-    val scaledData = scalerModel.transform(transformedData)
-    
     val kmeans = new KMeans()
       .setK(k)
       .setSeed(1L)
     
-    val kmModel = kmeans.fit(scaledData)
+    val kmModel = kmeans.fit(transformedData)
     
     kmModel.summary.predictions.show
     
+    // Map the vector elements to an array to create tuples
     kmModel.clusterCenters.map(vectorElement => (vectorElement(0), vectorElement(1)))
     
   }
@@ -120,30 +120,28 @@ object assignment  {
       .setInputCols(Array("a", "b", "c"))
       .setOutputCol("unscaledFeatures")
     
+    val scaler = new MinMaxScaler()
+      .setInputCol("unscaledFeatures")
+      .setOutputCol("features")
+    
+    // Make a transformation pipeline to first use vectorAssembler and then scale the data
     val transformationPipeline = new Pipeline()
-      .setStages(Array(vectorAssembler))
+      .setStages(Array(vectorAssembler, scaler))
     
     //Fit produces a transformer
     val pipeLine = transformationPipeline.fit(df)
     val transformedData = pipeLine.transform(df)
     transformedData.show
     
-    val scaler = new MinMaxScaler()
-      .setInputCol("unscaledFeatures")
-      .setOutputCol("features")
-    
-    val scalerModel = scaler.fit(transformedData)
-    
-    val scaledData = scalerModel.transform(transformedData)
-    
     val kmeans = new KMeans()
       .setK(k)
       .setSeed(1L)
     
-    val kmModel = kmeans.fit(scaledData)
+    val kmModel = kmeans.fit(transformedData)
     
     kmModel.summary.predictions.show
     
+    // Map the vector elements to an array to create triples
     kmModel.clusterCenters.map(vectorElement => (vectorElement(0), vectorElement(1), vectorElement(2)))
   }
 
@@ -153,34 +151,33 @@ object assignment  {
       .setInputCols(Array("a", "b", "num(LABEL)"))
       .setOutputCol("unscaledFeatures")
     
+    val scaler = new MinMaxScaler()
+      .setInputCol("unscaledFeatures")
+      .setOutputCol("features")
+    
+    // Make a transformation pipeline to first use vectorAssembler and then scale the data
     val transformationPipeline = new Pipeline()
-      .setStages(Array(vectorAssembler))
+      .setStages(Array(vectorAssembler, scaler))
     
     //Fit produces a transformer
     val pipeLine = transformationPipeline.fit(df)
     val transformedData = pipeLine.transform(df)
     transformedData.show
     
-    val scaler = new MinMaxScaler()
-      .setInputCol("unscaledFeatures")
-      .setOutputCol("features")
-    
-    val scalerModel = scaler.fit(transformedData)
-    
-    val scaledData = scalerModel.transform(transformedData)
-    
     val kmeans = new KMeans()
       .setK(k)
       .setSeed(1L)
     
-    val kmModel = kmeans.fit(scaledData)
+    val kmModel = kmeans.fit(transformedData)
     
     kmModel.summary.predictions.show
     
+    // Sort the cluster centers to decreasing order by the third value, as higher value means more fatal results,
+    // and then map the first two elements of the first two vectors to tuples to an array
     kmModel.clusterCenters
       .sortWith((vectorElement1, vectorElement2)=>vectorElement1(2) > vectorElement2(2))
-      .map(vectorElement => (vectorElement(0), vectorElement(1)))
       .take(2)
+      .map(vectorElement => (vectorElement(0), vectorElement(1)))
     
   }
 
@@ -190,34 +187,36 @@ object assignment  {
       .setInputCols(Array("a", "b"))
       .setOutputCol("unscaledFeatures")
     
+    val scaler = new MinMaxScaler()
+      .setInputCol("unscaledFeatures")
+      .setOutputCol("features")
+    
+    // Make a transformation pipeline to first use vectorAssembler and then scale the data
     val transformationPipeline = new Pipeline()
-      .setStages(Array(vectorAssembler))
+      .setStages(Array(vectorAssembler, scaler))
     
     //Fit produces a transformer
     val pipeLine = transformationPipeline.fit(df)
     val transformedData = pipeLine.transform(df)
     transformedData.show
     
-    val scaler = new MinMaxScaler()
-      .setInputCol("unscaledFeatures")
-      .setOutputCol("features")
-    
-    val scalerModel = scaler.fit(transformedData)
-    
-    val scaledData = scalerModel.transform(transformedData)
-    
+    // Initialize an empty array
     var arrayOfCosts: Array[(Int, Double)] = Array()
     
+    // Loop through numbers of clusters
     for ( k <- low to high){
-    
+      // Create a kmeans for the number of clusters
       val kmeans = new KMeans()
         .setK(k)
         .setSeed(1L)
     
-      val kmModel = kmeans.fit(scaledData)
-      val cost = kmModel.computeCost(scaledData)
+      val kmModel = kmeans.fit(transformedData)
+      val cost = kmModel.computeCost(transformedData)
+      
+      // Add the cost with the number of clusters to the array
       arrayOfCosts +:= (k, cost)
     }
+    
     return arrayOfCosts
   }
 
