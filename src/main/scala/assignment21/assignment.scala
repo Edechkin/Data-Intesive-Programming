@@ -200,24 +200,34 @@ object assignment  {
     val transformedData = pipeLine.transform(df)
     transformedData.show
     
-    // Initialize an empty array
-    var arrayOfCosts: Array[(Int, Double)] = Array()
+    // Compute the cost array recursively, print it out and return it
+    val costsArray = recursiveCosts(transformedData, low, high)
+    costsArray.foreach(println)
+    return costsArray
+  }
+  
+  /* Parameter df is the transformed data frame, k is desired k value for KMeans and high is highest required k
+   * The cost of the highest k will be at the top of the array because they are added to the array from the back,
+   * but also giving the array as parameter to the recursion is not necessary
+   */
+  def recursiveCosts(df: DataFrame, k: Int, high: Int): Array[(Int, Double)] = {
+    // Create the KMeans for the given seed
+    val kmeans = new KMeans()
+      .setK(k)
+      .setSeed(1L)
+
+    val kmModel = kmeans.fit(df)
+    val cost = kmModel.computeCost(df)
     
-    // Loop through numbers of clusters
-    for ( k <- low to high){
-      // Create a kmeans for the number of clusters
-      val kmeans = new KMeans()
-        .setK(k)
-        .setSeed(1L)
-    
-      val kmModel = kmeans.fit(transformedData)
-      val cost = kmModel.computeCost(transformedData)
-      
-      // Add the cost with the number of clusters to the array
-      arrayOfCosts +:= (k, cost)
+    /* If the current k is the highest required, add the cost to an empty array and return it
+    * Otherwise enter new recursion with a k one higher and add the cost of this recursion level to the returned value
+    */
+    if (k == high) {
+      return Array() :+ (k, cost)
     }
-    
-    return arrayOfCosts
+    else {
+      return recursiveCosts(df, k + 1, high) :+ (k, cost)
+    }
   }
 
 }
