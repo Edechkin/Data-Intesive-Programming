@@ -218,7 +218,7 @@ object assignment  {
     return costsArray
   }
   
-  /* Parameter df is the transformed data frame, k is desired k value for KMeans and high is highest required k
+  /* Parameter df is the transformed data frame, k is desired k value for KMeans and hlow is the lowest required k
    * The costs are added to the array from the back, hence giving the array as parameter to the recursion is not necessary
    */
   def recursiveCosts(df: DataFrame, k: Int, low: Int): Array[(Int, Double)] = {
