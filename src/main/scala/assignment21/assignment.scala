@@ -43,6 +43,9 @@ import com.sun.org.apache.xalan.internal.xsltc.compiler.ForEach
 
 import scala.util.Sorting
 
+import breeze.linalg._
+import breeze.numerics._
+import breeze.plot._
 
 object assignment  {
   // Suppress the log messages:
@@ -201,16 +204,24 @@ object assignment  {
     transformedData.show
     
     // Compute the cost array recursively, print it out and return it
-    val costsArray = recursiveCosts(transformedData, low, high)
+    val costsArray = recursiveCosts(transformedData, high, low)
     costsArray.foreach(println)
+    
+    // Make graph of the elbow
+    val fig = Figure()
+    val p = fig.subplot(0)
+    val cost = costsArray.map(element => element._2)
+    val clusterAmount = costsArray.map(element => element._1.toDouble)
+    p += plot(clusterAmount, cost) 
+    scala.io.StdIn.readLine()
+    
     return costsArray
   }
   
   /* Parameter df is the transformed data frame, k is desired k value for KMeans and high is highest required k
-   * The cost of the highest k will be at the top of the array because they are added to the array from the back,
-   * but also giving the array as parameter to the recursion is not necessary
+   * The costs are added to the array from the back, hence giving the array as parameter to the recursion is not necessary
    */
-  def recursiveCosts(df: DataFrame, k: Int, high: Int): Array[(Int, Double)] = {
+  def recursiveCosts(df: DataFrame, k: Int, low: Int): Array[(Int, Double)] = {
     // Create the KMeans for the given seed
     val kmeans = new KMeans()
       .setK(k)
@@ -222,11 +233,11 @@ object assignment  {
     /* If the current k is the highest required, add the cost to an empty array and return it
     * Otherwise enter new recursion with a k one higher and add the cost of this recursion level to the returned value
     */
-    if (k == high) {
+    if (k == low) {
       return Array() :+ (k, cost)
     }
     else {
-      return recursiveCosts(df, k + 1, high) :+ (k, cost)
+      return recursiveCosts(df, k - 1, low) :+ (k, cost)
     }
   }
 
